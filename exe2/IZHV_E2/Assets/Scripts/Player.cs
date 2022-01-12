@@ -13,6 +13,7 @@ public class Player : MonoBehaviour
     /// Velocity multiplier applied when jumping.
     /// </summary>
     public float jumpVelocity = 100.0f;
+    
 
     /// <summary>
     /// Distance to which ground should be detected.
@@ -98,7 +99,45 @@ public class Player : MonoBehaviour
     /// Current state of gravity - 1.0 for down, -1.0f for up.
     /// </summary>
     private float mCurrentGravity = 1.0f;
+
+    /// <summary>
+    /// Buffer in seconds for registering press of jump button
+    /// </summary>
+    private float jumpBufferTime = 0.1f;
+
+    /// <summary>
+    /// If value is > 0 then jump button was pressed in {jumpBufferTime}
+    /// </summary>
+    private float jumpBufferCounter;
     
+    /// <summary>
+    /// Buffer in seconds for registering press of vertical button
+    /// </summary>
+    private float verticalBufferTime = 0.1f;
+
+    /// <summary>
+    /// If value is > 0 then vertical button was pressed in {verticalBufferTime}
+    /// </summary>
+    private float verticalBufferCounter;
+    
+    /// <summary>
+    ///  State of vertical axis
+    /// </summary>
+    private float verticalInput;
+    
+    /// <summary>
+    ///  State of vertical axis
+    /// </summary>
+    private float gravityScale = 2.5f;
+    /// <summary>
+    ///  State of vertical axis
+    /// </summary>
+    private float fallMultiplayer = 3f;
+
+
+
+
+    private bool JumpButtonPressed => Input.GetButton("Jump");
     /// <summary>
     /// Called before the first frame update.
     /// </summary>
@@ -117,22 +156,34 @@ public class Player : MonoBehaviour
     void Update()
     {
         // Process player input.
-        var verticalMovement = Input.GetAxisRaw("Vertical");
-        var horizontalMovement = Input.GetAxisRaw("Horizontal");
-        var jumpMovement = Input.GetButtonDown("Jump");
+        verticalInput = Input.GetAxisRaw("Vertical");
+        
+        if (Input.GetButtonDown("Jump"))
+            jumpBufferCounter = jumpBufferTime;
+        else
+            jumpBufferCounter -= Time.deltaTime;
+        
+        if (verticalInput != 0f)
+            verticalBufferCounter = verticalBufferTime;
+        else
+            verticalBufferCounter -= Time.deltaTime;
+    }
+
+    /// <summary>
+    /// Update called for every update interval.
+    /// </summary>
+    private void FixedUpdate()
+    {
         var onGround = IsOnGround();
         
-        // Reset gravity switch if we are on the ground.
         mSwitchedGravity &= !onGround;
-
-        // Impart the initial impulse if we are jumping.
-        if (jumpMovement && onGround)
-        { mRB.velocity = -Physics2D.gravity * jumpVelocity; }
         
         // Switch gravity with vertical movement.
-        if (verticalMovement != 0.0 && !mSwitchedGravity)
+        if (verticalBufferCounter > 0f && !mSwitchedGravity)
         {
-            mCurrentGravity = verticalMovement > 0.0f ? 1.0f : -1.0f;
+            verticalBufferCounter = 0;
+            
+            mCurrentGravity = verticalInput > 0.0f ? 1.0f : -1.0f;
             Physics2D.gravity = mCurrentGravity * new Vector2(
                 Math.Abs(Physics2D.gravity.x),
                 Math.Abs(Physics2D.gravity.y)
@@ -143,9 +194,54 @@ public class Player : MonoBehaviour
                 rotateAxis.z && mCurrentGravity > 0.0f ? 180.0f : 0.0f
             ) * axisDirection);
             mSwitchedGravity = true;
+            verticalBufferCounter = 0;
+        }
+        
+        // Impart the initial impulse if we are jumping.
+        if (jumpBufferCounter > 0f && onGround)
+        {
+            jumpBufferCounter = 0;
+            var jumpVelocityNew = JumpButtonPressed ? 1.1f * jumpVelocity: 1f * jumpVelocity;
+            mRB.velocity = -Physics2D.gravity * jumpVelocityNew;
+        }
+
+        if (Physics2D.gravity.y < 0f)
+        {
+            Debug.Log("Down to Up");
+            if (mRB.velocity.y <= 0f)
+            {
+                mRB.gravityScale = fallMultiplayer;
+            }
+            else
+            {
+                mRB.gravityScale = gravityScale;
+            }
+        }
+        if (Physics2D.gravity.y > 0f)
+        {
+            Debug.Log("Up to down");
+            if (mRB.velocity.y >= 0f)
+            {
+                mRB.gravityScale = fallMultiplayer;
+            }
+            else
+            {
+                mRB.gravityScale = gravityScale;
+            }
+        }
+
+        if (!onGround)
+        { // While in mid-air, we can rotate.
+            mSpriteTransform.rotation = Quaternion.RotateTowards(
+                mSpriteTransform.rotation, mTargetRotation, 
+                rotationSpeed * Time.fixedDeltaTime
+            );
+        }
+        else
+        { // Snap to target rotation once on solid ground.
+            mSpriteTransform.rotation = mTargetRotation;
         }
     }
-
     /// <summary>
     /// Check if we are on the ground.
     /// </summary>
@@ -160,26 +256,6 @@ public class Player : MonoBehaviour
         );
 
         return hitInfo.collider != null;
-    }
-
-    /// <summary>
-    /// Update called for every update interval.
-    /// </summary>
-    private void FixedUpdate()
-    {
-        var onGround = IsOnGround();
-        
-        if (!onGround)
-        { // While in mid-air, we can rotate.
-            mSpriteTransform.rotation = Quaternion.RotateTowards(
-                mSpriteTransform.rotation, mTargetRotation, 
-                rotationSpeed * Time.fixedDeltaTime
-            );
-        }
-        else
-        { // Snap to target rotation once on solid ground.
-            mSpriteTransform.rotation = mTargetRotation;
-        }
     }
     
     /// <summary>

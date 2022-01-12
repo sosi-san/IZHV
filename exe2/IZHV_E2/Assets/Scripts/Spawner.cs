@@ -58,6 +58,17 @@ public class Spawner : MonoBehaviour
     /// <summary>
     /// Called before the first frame update.
     /// </summary>
+    
+    /// <summary>
+    /// Called before the first frame update.
+    /// </summary>
+    private float minimalDistance_x = 10.0f;
+    /// <summary>
+    /// Called before the first frame update.
+    /// </summary>
+    private float maximalDistance_x = 15.0f;
+
+    private GameObject lastObsticle;
     void Start()
     { ResetSpawn(); }
 
@@ -67,7 +78,12 @@ public class Spawner : MonoBehaviour
     void Update()
     {
         if (spawnObstacles)
-        { // Check if we should spawn.
+        { // Check if we should spawn
+            if (CanSpawn())
+            {
+                SpawnObstacle();
+            }
+            /*
             spawnAccumulator += Time.deltaTime;
             if (spawnAccumulator >= nextSpawnIn)
             { // Spawn at most one obstacle per frame.
@@ -76,7 +92,15 @@ public class Spawner : MonoBehaviour
                 
                 SpawnObstacle();
             }
+            */
+            
         }
+    }
+
+    private bool CanSpawn()
+    {
+        if (lastObsticle == null) return true;
+        return (Vector2.Distance(lastObsticle.transform.position, transform.position) > Random.Range(minimalDistance_x, maximalDistance_x));
     }
 
     /// <summary>
@@ -99,6 +123,16 @@ public class Spawner : MonoBehaviour
         
         // Move the obstacle into the correct layer.
         obstacle.layer = LayerMask.NameToLayer(spawnLayer);
+        if (Random.Range(0, 100) > 80)
+        {
+            var obstacle2 = Instantiate(obstaclePrefab, transform);
+            obstacle2.transform.position = obstacle.transform.position + (Vector3.up * (spawnDown?-1:1));
+            obstacle2.transform.localScale = new Vector3(spawnSize, spawnSize, spawnSize);
+        
+            // Move the obstacle into the correct layer.
+            obstacle2.layer = LayerMask.NameToLayer(spawnLayer);
+        }
+        lastObsticle = obstacle;
     }
 
     /// <summary>
