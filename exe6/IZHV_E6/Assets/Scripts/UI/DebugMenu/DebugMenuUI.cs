@@ -137,7 +137,16 @@ public class DebugMenuUI : MonoBehaviour
                     if (GUI.changed)
                     { InventoryManager.Instance.availableCurrency = currency; }
                  */
-                
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Currency: ", GUILayout.Width(WINDOW_DIMENSION.x / 4.0f));
+                    var currency = InventoryManager.Instance.availableCurrency;
+                    currency = (int) GUILayout.HorizontalSlider(currency, 0.0f, 1000.0f, 
+                        GUILayout.ExpandWidth(true));
+                    if (GUI.changed)
+                    { InventoryManager.Instance.availableCurrency = currency; }
+                }
+                GUILayout.EndHorizontal();
                 
                 
                 
@@ -164,7 +173,33 @@ public class DebugMenuUI : MonoBehaviour
                  * This task can be considered as completed once all three handles can
                  * be controlled from the Cheat Console.
                  */
-                
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("MasterVolume: ", GUILayout.Width(WINDOW_DIMENSION.x / 4.0f));
+                    var volume = SoundManager.Instance.masterVolume;
+                    volume = (int) GUILayout.HorizontalSlider(volume, -80.0f, 20.0f,
+                        GUILayout.ExpandWidth(true));
+                    if (GUI.changed)
+                    {
+                        SoundManager.Instance.masterVolume = volume;
+                    }
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    var interactable = GameManager.Instance.interactiveMode;
+                    interactable = GUILayout.Toggle(interactable, "Interactable");
+
+                    var mute = SoundManager.Instance.masterMuted;
+                    mute = GUILayout.Toggle(mute, "Mute");
+                    
+                    if (GUI.changed)
+                    {
+                        GameManager.Instance.interactiveMode = interactable;
+                        SoundManager.Instance.masterMuted = mute;
+                    }
+                }
+                GUILayout.EndHorizontal();
                 
                 
                 
@@ -196,7 +231,7 @@ public class DebugMenuUI : MonoBehaviour
                     if (GUILayout.Button("Enable\nDummy\nCharacter", 
                         GUILayout.ExpandWidth(true), 
                         GUILayout.ExpandHeight(true)))
-                    { /* Fill the code here! */ }
+                    { GameManager.Instance.TogglePlayerCharacter(); }
                 }
                 GUILayout.EndHorizontal();
                 // Do not forget to end each group in the correct order!

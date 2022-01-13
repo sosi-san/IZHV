@@ -153,7 +153,8 @@ public class InventoryManager : MonoBehaviour
          * this is that whenever we press the button, CreateItem() will
          * be called.
          */
-        
+        mItemCreateButton = itemDetails.Q<Button>("ItemDetailButtonCreate");
+        mItemCreateButton.clicked += () => CreateItem();
         
         
         
@@ -356,9 +357,26 @@ public class InventoryManager : MonoBehaviour
         
         if (item == null)
         { // We have no item selected -> Provide some default information.
+            mItemDetailName.text = "No item selected";
+            mItemDetailDescription.text = "Select item to display description";
+            mItemDetailCost.text = "0";
+            
+            mItemCreateButton.SetEnabled(false);
         }
         else
         { // We have item selected -> Use the item information.
+            var enoughMoney = availableCurrency - item.definition.cost >= 0;
+            
+            mItemDetailName.text = item.definition.readableName;
+            mItemDetailDescription.text = item.definition.readableDescription;
+            
+            mItemDetailCost.text = enoughMoney ? 
+                item.definition.cost.ToString()
+                :
+                $"<color=red>{item.definition.cost.ToString()}</color>";
+            
+            mItemCreateButton.SetEnabled(enoughMoney);
+
         }
         
         selectedItem = item;
@@ -391,9 +409,20 @@ public class InventoryManager : MonoBehaviour
          * it from the cost (itemDefinition.cost) from availableCurrency property.
          * These items are not cheap to make!
          */
-        
         var itemDefinition = selectedItem?.definition;
+
+        if (itemDefinition == null)
+            return false;
         
-        return false;
+        var enoughMoney = availableCurrency - itemDefinition.cost >= 0;
+        
+        if (!enoughMoney)
+            return false;
+        
+        availableCurrency -= itemDefinition.cost;
+        Instantiate(itemDefinition.prefab, createDestination.transform);
+        
+        
+        return true;
     }
 }
