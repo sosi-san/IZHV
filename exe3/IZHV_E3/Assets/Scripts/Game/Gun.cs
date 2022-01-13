@@ -256,9 +256,7 @@ public class Gun : MonoBehaviour
         else
         { // Using default -> Spawn new GameObject.
             // Instantiate the bullet and set it up.
-            var bullet = Instantiate(bulletPrefab);
-            bullet.transform.position = position;
-            bullet.transform.rotation = rotation;
+            Instantiate(bulletPrefab, position, rotation);
         }
     }
     
