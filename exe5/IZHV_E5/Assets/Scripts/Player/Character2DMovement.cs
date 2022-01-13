@@ -54,8 +54,9 @@ public class Character2DMovement : MonoBehaviour
 	private Character2DController mController;
 	private CharacterSelector mSelector;
 	private InputManager mInput;
-	
-    /// <summary>
+	private static readonly int Speed = Animator.StringToHash("Speed");
+
+	/// <summary>
     /// Called before the first frame update.
     /// </summary>
     void Start()
@@ -212,6 +213,10 @@ public class Character2DMovement : MonoBehaviour
 	     *   * Persistent heading flag: *mHeadingRight*
 	     *   * Rotating a local rotation by an axis: localRotation *= Quaternion.Euler(...)
 	     */
+	    mHeadingRight = mInput.move.x != 0 ? mInput.move.x > 0 : mHeadingRight;
+	    var x_scale = mHeadingRight ? 1f : -1f;
+	    var oldLocalScale = transform.localScale;
+	    transform.localScale = new Vector3(Mathf.Abs(oldLocalScale.x) * x_scale, oldLocalScale.y, oldLocalScale.z);
 		
 	    var animator = mSelector.charAnimator;
 	    if (animator != null)
@@ -265,6 +270,12 @@ public class Character2DMovement : MonoBehaviour
 			 *   * Current Animator instance: *animator*
 			 *   * Animator methods: *SetFloat* and *SetBool*
 			 */
+			animator.SetFloat(Speed, speed);
+			animator.SetFloat("MoveSpeed", moveSpeed);
+			animator.SetBool("Jump", jump);
+			animator.SetBool("Grounded", grounded);
+			animator.SetBool("Fall", falling);
+			animator.SetBool("Crouch", crouch);
 	    }
     }
 }
